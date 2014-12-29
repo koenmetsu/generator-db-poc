@@ -1,0 +1,13 @@
+{
+  "name": "generator-db-poc",
+  "version": "0.1.0",
+  "description": "infrabel yeoman db poc",
+  "keywords": [
+    "yeoman-generator"
+  ],
+  "author": "infrabel",
+  "dependencies": {
+    "yeoman-generator": "^0.18.5",
+    "yosay": "^1.0.1"
+  }
+}
