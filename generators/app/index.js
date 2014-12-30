@@ -50,6 +50,17 @@ function createDatabasePrompts(databases){
             ];
 }
 
+function createTablePrompts(tables){
+    return [
+                {
+                    type    : 'list',
+                    name    : 'table',
+                    message : 'Which table do you want to use?',
+                    choices : tables
+                },
+            ];
+}
+
 function createConfig(answers){
     var resultedAnswers =  {};
     resultedAnswers.server = answers.server;
@@ -100,7 +111,7 @@ function getDatabases(config, callback){
     });
 }
 
-function showTables(config){
+function getTables(config, callback){
     var connection = new Connection(config);
     connection.on('connect', function(err){
         if(err){
@@ -122,13 +133,50 @@ function showTables(config){
             });
         });
         request.on('doneProc', function(rowCount, more, rows){
-            console.log(util.format('The database %s has the following tables: '), config.options.database);
-            tables.forEach(function(table){
-                console.log(table);
-            });
+            callback(tables);
             connection.close();
         });
 
+        connection.execSql(request);
+    });
+}
+
+function showColumns(config, table){
+    var connection = new Connection(config);
+    connection.on('connect', function(err){
+        if(err){
+            console.log('Errors: ' + err);
+        }
+        var request = new Request(util.format("exec sp_columns %s;", table), function(err, rowCount) {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log(rowCount + ' rows');
+            }
+        });
+        request.on('row', function(columns) {
+            var columnInfo = {};
+            columns.forEach(function(column) {
+                if(column.metadata.colName === 'COLUMN_NAME'){
+                    columnInfo.name = column.value;
+                }
+                if(column.metadata.colName === 'TYPE_NAME'){
+                    columnInfo.type = column.value;
+                }
+                if(column.metadata.colName === 'PRECISION'){
+                    columnInfo.precision = column.value;
+                }
+                if(column.metadata.colName === 'NULLABLE'){
+                    columnInfo.nullable = column.value;
+                }
+            });
+            console.log(util.format('Column: %s, %s PRECISION %s', columnInfo.name, columnInfo.type, columnInfo.precision));
+        });
+        request.on('doneProc', function(rowCount, more, rows){
+            connection.close();
+        });
+        console.log(util.format('The table %s has the following columns:', table));
+        console.log('---------------------');
         connection.execSql(request);
     });
 }
@@ -148,8 +196,13 @@ module.exports = generators.Base.extend({
                 getDatabases(config, function(databases){
                     self.prompt(createDatabasePrompts(databases), function(finalAnswers){
                         allAnswers.database = finalAnswers.database;
-                        self.answers = allAnswers;
-                        done();
+                        var finalConfig = createConfig(allAnswers);
+                        getTables(finalConfig, function(tables){
+                            self.prompt(createTablePrompts(tables), function(tableAnswers){
+                                showColumns(finalConfig, tableAnswers.table);
+                                done();
+                            });
+                        });
                     });
 
                 });
@@ -158,9 +211,5 @@ module.exports = generators.Base.extend({
     },
     writing: function(){
         var self = this;
-
-        self.log('I am connecting to ' + self.answers.server + '\\'+ self.answers.instanceName +' with user ' + self.answers.user);
-
-        showTables(createConfig(self.answers));
     }
 });
