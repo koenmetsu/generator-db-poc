@@ -103,8 +103,8 @@ function getDatabases(config, callback){
             });
         });
         request.on('doneProc', function (rowCount, more, rows) {
-            callback(databases);
             connection.close();
+            return callback(databases);
         });
 
         connection.execSql(request);
@@ -133,8 +133,8 @@ function getTables(config, callback){
             });
         });
         request.on('doneProc', function(rowCount, more, rows){
-            callback(tables);
             connection.close();
+            return callback(tables);
         });
 
         connection.execSql(request);
