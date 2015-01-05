@@ -17,6 +17,14 @@ prompts.forServer = [
             }
         ];
 
+prompts.forOracle = [
+            {
+                type    : 'input',
+                name    : 'tns',
+                message : 'The tns to be used',
+            },
+        ];
+
 prompts.forCredentials = function(answers){
     return [
                 {

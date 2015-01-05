@@ -1,5 +1,6 @@
 var Connection = require('tedious').Connection;
 var Request = require('tedious').Request;
+var TYPES = require('tedious').TYPES;
 var util = require('util');
 
 function getDatabases(config, callback){
@@ -9,7 +10,7 @@ function getDatabases(config, callback){
         if(err){
             console.log('Errors: ' + err);
         }
-        var request = new Request("SELECT name FROM master..sysdatabases;", function(err, rowCount) {
+        var request = new Request('SELECT name FROM master..sysdatabases;', function(err, rowCount) {
             if (err) {
                 console.log(err);
             } else {
@@ -36,7 +37,7 @@ function getTables(config, callback){
         if(err){
             console.log('Errors: ' + err);
         }
-        var request = new Request("SELECT * FROM information_schema.tables", function(err, rowCount) {
+        var request = new Request('SELECT TABLE_NAME FROM information_schema.tables', function(err, rowCount) {
             if (err) {
                 console.log(err);
             } else {
@@ -66,13 +67,14 @@ function showColumns(config, table){
         if(err){
             console.log('Errors: ' + err);
         }
-        var request = new Request(util.format("exec sp_columns %s;", table), function(err, rowCount) {
+        var request = new Request('exec sp_columns @table;', function(err, rowCount) {
             if (err) {
                 console.log(err);
             } else {
                 console.log(rowCount + ' rows');
             }
         });
+        request.addParameter('table', TYPES.VarChar, table);
         request.on('row', function(columns) {
             var columnInfo = {};
             columns.forEach(function(column) {

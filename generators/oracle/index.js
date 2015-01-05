@@ -3,13 +3,11 @@ var generators = require('yeoman-generator');
 var yosay = require('yosay');
 
 var prompts = require('../lib/prompts');
-var config = require('../lib/config.js');
-var mssql = require('../lib/mssql');
+var config = require('../lib/oracle_config.js');
+var oracle = require('../lib/oracle.js');
 
-var SqlGenerator = generators.Base.extend({
-});
 
-module.exports = SqlGenerator.extend({
+module.exports = generators.Base.extend({
     prompting: function(){
         var self = this;
         var done = self.async();
@@ -32,7 +30,7 @@ module.exports = SqlGenerator.extend({
         var getDatabases = function(credentialAnswers){
             answers = combineAnswers(answers, credentialAnswers);
             var myConfig = config.createFrom(answers);
-            mssql.getDatabases(myConfig, promptForDatabases);
+            oracle.getDatabases(myConfig, promptForDatabases);
         };
 
         var promptForDatabases = function(databases){
@@ -41,7 +39,7 @@ module.exports = SqlGenerator.extend({
 
         var getTables = function(finalAnswers){
             answers.database = finalAnswers.database;
-            mssql.getTables(config.createFrom(answers), promptForTable);
+            oracle.getTables(config.createFrom(answers), promptForTable);
         };
 
         var promptForTable = function(tables){
@@ -49,12 +47,13 @@ module.exports = SqlGenerator.extend({
         };
 
         var showColumns = function(tableAnswers){
-            mssql.showColumns(config.createFrom(answers), tableAnswers.table);
+            oracle.showColumns(config.createFrom(answers), tableAnswers.table);
             done();
         };
 
-        self.log(yosay('Welcome to our magnificent db-poc!'));
-        self.prompt(prompts.forServer, (promptForCredentials).bind(self));
+        self.log(yosay('Welcome to our magnificent ORACLE db-poc!'));
+        self.prompt(prompts.forOracle, (promptForCredentials).bind(self));
+
     },
     writing: function(){
         var self = this;
